@@ -61,7 +61,7 @@ export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
   }
 
   _configure() {
-    this._tag = this.cfg.tag || false
+    this._placement = this.cfg.placement || false
     this._autostart = this.cfg.autostart === false ? false : true // Default is true
     this._events = $.isPlainObject(this.cfg.events) ? this.cfg.events : {}
     this._vpaid = this.cfg.hasOwnProperty('vpaid') ? this.cfg.vpaid : 0 // Default VpaidMode is DISABLED
@@ -80,7 +80,7 @@ export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
 
   _loadImaSDK() {
     // Ensure is lazy loaded once (only if tag is filled)
-    if (this._imaIsloading || this._imaIsloaded || !this._tag) return
+    if (this._imaIsloading || this._imaIsloaded || !this._placement) return
 
     this._imaIsloading = true
     imaLoader((result) => {
@@ -134,7 +134,7 @@ export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
     }
 
     // Ensure plugin configuration has VAST tag
-    if (!this._tag) {
+    if (!this._placement) {
       // Handle content autoplay if no tag
       if (!this.options.autoPlay && this._autostart) {
         this._container.play()
@@ -270,42 +270,33 @@ export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
     }
   }
 
-  _requestAd() {
-    // Destroy any previously created ads loader instance
-    // IMA guidelines are to use the same AdsLoader instance for the entire
-    // lifecycle of your page, but Clappr may create a new video element if
-    // configure() method is called with a source.
-    this._destroyAdsLoader()
-
-    this._adsLoader = new google.ima.AdsLoader(this._adDisplayContainer)
-
-    this._adsLoader.addEventListener(
-      google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED,
-      (e) => {
-        this._onAdsManagerLoaded(e)
-      }
-    )
-
-    this._adsLoader.addEventListener(
-      google.ima.AdErrorEvent.Type.AD_ERROR,
-      (e) => {
-        this._onAdError(e)
-      }
-    )
-
-    let adsRequest = new google.ima.AdsRequest()
-    adsRequest.adTagUrl = this._tag
-    adsRequest.linearAdSlotWidth = this._contentElement.offsetWidth
-    adsRequest.linearAdSlotHeight = this._contentElement.offsetHeight
-    adsRequest.nonLinearAdSlotWidth = this._contentElement.offsetWidth
-    adsRequest.nonLinearAdSlotHeight = this._contentElement.offsetHeight
-
-    // Assume playback is consented by user
-    adsRequest.setAdWillAutoPlay(true)
-    adsRequest.setAdWillPlayMuted(false)
-
-    // requestAds() trigger _onAdsManagerLoaded() or _onAdError()
-    this._adsLoader.requestAds(adsRequest)
+  loadIMARequest(adsRequest) {
+    return new Promise((resolve, reject) => {
+      // Destroy any previously created ads loader instance
+      // IMA guidelines are to use the same AdsLoader instance for the entire
+      // lifecycle of your page, but Clappr may create a new video element if
+      // configure() method is called with a source.
+      this._destroyAdsLoader();
+      this._adsLoader = new google.ima.AdsLoader(this._adDisplayContainer);
+      this._adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (e) => {
+        resolve(e);
+      });
+      this._adsLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, (e) => {
+        var error = new Error();
+        error.event = e;
+        reject(error);
+      });
+      
+      adsRequest.linearAdSlotWidth = this._contentElement.offsetWidth;
+      adsRequest.linearAdSlotHeight = this._contentElement.offsetHeight;
+      adsRequest.nonLinearAdSlotWidth = this._contentElement.offsetWidth;
+      adsRequest.nonLinearAdSlotHeight = this._contentElement.offsetHeight;
+      // Assume playback is consented by user
+      adsRequest.setAdWillAutoPlay(true);
+      adsRequest.setAdWillPlayMuted(false);
+      // requestAds() trigger _onAdsManagerLoaded() or _onAdError()
+      this._adsLoader.requestAds(adsRequest);
+    });
   }
 
   _destroyAdsManager() {
@@ -314,6 +305,32 @@ export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
       delete this._adsManager
     }
   }
+
+  _requestAd () {
+    window.intowow.load({
+      placement: this._placement,
+      timeout: this._imaLoadtimeout,
+      render: (ad) => {
+        let adsRequest = new google.ima.AdsRequest();
+        adsRequest.adTagUrl = ad.adTagUrl;
+        adsRequest.adsResponse = ad.adsResponse;
+
+        return this.loadIMARequest(adsRequest).then((event) => {
+          this._onAdsManagerLoaded(event)
+        }, (err) => {
+          const adErrorEvent = err.event
+          // google.ima.AdErrorEvent : https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/apis#ima.AdErrorEvent
+          // google.ima.AdError : https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/apis#ima.AdError
+          // console.log('onAdError: ' + adErrorEvent.getError())
+          this._imaEvent('ad_error', adErrorEvent)
+          throw err
+        })
+      }
+    }).then(null, () => {
+      this._playVideoContent()
+    })
+  }
+
 
   _onAdsManagerLoaded(adsManagerLoadedEvent) {
     let adsRenderingSettings = new google.ima.AdsRenderingSettings()
@@ -327,6 +344,7 @@ export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
     this._adsManager = adsManagerLoadedEvent.getAdsManager(this._contentElement, adsRenderingSettings)
 
     this._adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, (e) => {
+      debugger
       this._onAdError(e)
     })
 
@@ -396,15 +414,6 @@ export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
     })
 
     this._playAds()
-  }
-
-  _onAdError(adErrorEvent) {
-    // google.ima.AdErrorEvent : https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/apis#ima.AdErrorEvent
-    // google.ima.AdError : https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/apis#ima.AdError
-    // console.log('onAdError: ' + adErrorEvent.getError())
-    this._imaEvent('ad_error', adErrorEvent)
-
-    this._playVideoContent()
   }
 
   _onDurationTimeout() {
