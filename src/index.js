@@ -5,8 +5,8 @@ import imaLoader from './ima-loader'
 import playSvg from './play.svg'   // 01-play.svg icon from Clappr player
 import loadSvg from './loader.svg' // http://articles.dappergentlemen.com/2015/01/13/svg-spinner/
 
-export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
-  get name() { return 'google-ima-html5-preroll-plugin' }
+export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
+  get name() { return 'intowow-preroll-plugin' }
 
   get attributes() {
     return {
@@ -16,7 +16,7 @@ export default class ClapprGoogleImaHtml5PrerollPlugin extends UICorePlugin {
   }
 
   get cfg() {
-    return this.options.googleImaHtml5PrerollPlugin || {}
+    return this.options.intowowPrerollPlugin || {}
   }
 
   constructor(core) {

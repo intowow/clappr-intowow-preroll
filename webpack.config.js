@@ -6,14 +6,14 @@ const NotifierPlugin = require('webpack-notifier')
 var outputFile, plugins = []
 
 if (process.env.npm_lifecycle_event === 'dist') {
-  outputFile = 'clappr-google-ima-html5-preroll-plugin.min.js'
+  outputFile = 'clappr-intowow-preroll-plugin.min.js'
   plugins.push(new webpack.optimize.UglifyJsPlugin({
     output: {
       comments: false,
     },
   }))
 } else {
-  outputFile = 'clappr-google-ima-html5-preroll-plugin.js'
+  outputFile = 'clappr-intowow-preroll-plugin.js'
 }
 
 plugins.push(new NotifierPlugin({
@@ -27,7 +27,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: outputFile,
-    library: 'ClapprGoogleImaHtml5PrerollPlugin',
+    library: 'ClapprIntowowPrerollPlugin',
     libraryTarget: 'umd',
   },
   module: {
