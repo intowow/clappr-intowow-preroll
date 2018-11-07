@@ -307,32 +307,42 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
   }
 
   _requestAd () {
+    let render = (ad) => {
+      let adsRequest = new google.ima.AdsRequest();
+      adsRequest.adTagUrl = ad.adTagUrl;
+      adsRequest.adsResponse = ad.adsResponse;
+
+      return this.loadIMARequest(adsRequest).then((event) => {
+        this._onAdsManagerLoaded(event, ad.eventListener)
+      }, (err) => {
+        const adErrorEvent = err.event
+        // google.ima.AdErrorEvent : https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/apis#ima.AdErrorEvent
+        // google.ima.AdError : https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/apis#ima.AdError
+        this._imaEvent('ad_error', adErrorEvent)
+        throw err
+      })
+    }
+
     window.intowow.load({
       placement: this._placement,
       timeout: this._imaLoadtimeout,
-      render: (ad) => {
-        let adsRequest = new google.ima.AdsRequest();
-        adsRequest.adTagUrl = ad.adTagUrl;
-        adsRequest.adsResponse = ad.adsResponse;
-
-        return this.loadIMARequest(adsRequest).then((event) => {
-          this._onAdsManagerLoaded(event)
-        }, (err) => {
-          const adErrorEvent = err.event
-          // google.ima.AdErrorEvent : https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/apis#ima.AdErrorEvent
-          // google.ima.AdError : https://developers.google.com/interactive-media-ads/docs/sdks/html5/v3/apis#ima.AdError
-          // console.log('onAdError: ' + adErrorEvent.getError())
-          this._imaEvent('ad_error', adErrorEvent)
-          throw err
-        })
-      }
+      source: this.core.options.source,
+      render: render
     }).then(null, () => {
       this._playVideoContent()
     })
   }
 
+  emitVideoEvent(event, duration, eventListener) {
+    const percentage = Math.ceil((duration - this._adsManager.getRemainingTime() * 1000) / duration * 100)
 
-  _onAdsManagerLoaded(adsManagerLoadedEvent) {
+    eventListener.emit(event, {
+      duration,
+      percentage:  Math.min(100, Math.max(0, percentage))
+    })
+  }
+
+  _onAdsManagerLoaded(adsManagerLoadedEvent, eventListener) {
     let adsRenderingSettings = new google.ima.AdsRenderingSettings()
 
     // Plugin will handle playback state when ad has completed
@@ -343,8 +353,9 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
 
     this._adsManager = adsManagerLoadedEvent.getAdsManager(this._contentElement, adsRenderingSettings)
 
+    let duration = 0
+
     this._adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, (e) => {
-      debugger
       this._onAdError(e)
     })
 
@@ -362,14 +373,18 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.CLICK, () => {
+      this.emitVideoEvent('click', duration, eventListener)
       this._imaEvent('click')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.IMPRESSION, () => {
+      duration = duration || Math.floor(1000 * this._adsManager.getRemainingTime())
+      eventListener.emit('impression')
       this._imaEvent('impression')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, (e) => {
+      duration = duration || Math.floor(1000 * this._adsManager.getRemainingTime())
       if (! e.getAd().isLinear()) {
         // KNOWN ISSUE: non-linear ad is displayed *before* content for custom duration
         // FIXME: find a way to display it while playing content
@@ -378,22 +393,27 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
         this._maxDuration && this._startMaxDurationTimer()
       }
 
+      this.emitVideoEvent('video_view', duration, eventListener)
       this._imaEvent('started')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.FIRST_QUARTILE, () => {
+      this.emitVideoEvent('video_view', duration, eventListener)
       this._imaEvent('first_quartile')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.MIDPOINT, () => {
+      this.emitVideoEvent('video_view', duration, eventListener)
       this._imaEvent('midpoint')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.THIRD_QUARTILE, () => {
+      this.emitVideoEvent('video_view', duration, eventListener)
       this._imaEvent('third_quartile')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, () => {
+      this.emitVideoEvent('video_view', duration, eventListener)
       this._imaEvent('complete')
     })
 
@@ -406,10 +426,22 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, () => {
+      this.emitVideoEvent('skip', duration, eventListener)
       this._imaEvent('skipped')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.USER_CLOSE, () => {
+      this._imaEvent('user_close')
+    })
+
+    var volumeState
+    this._adsManager.addEventListener(google.ima.AdEvent.Type.VOLUME_CHANGED, () => {
+      var newVolState = this._adsManager.getVolume() > 0 ? 'mute' : 'unmute'
+      if (volumeState !== newVolState) {
+        this.emitVideoEvent(newVolState, duration, eventListener)
+        volumeState = newVolState
+      }
+
       this._imaEvent('user_close')
     })
 
