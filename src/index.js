@@ -4,6 +4,7 @@ import {svg, mp4} from './dummy'
 import imaLoader from './ima-loader'
 import playSvg from './play.svg'   // 01-play.svg icon from Clappr player
 import loadSvg from './loader.svg' // http://articles.dappergentlemen.com/2015/01/13/svg-spinner/
+import adIcon from './ad_icon.png'
 
 export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
   get name() { return 'intowow-preroll-plugin' }
@@ -343,6 +344,95 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
   }
 
+  _createWidgets () {
+    var isVpaid = this._adsManager.getCurrentAd().getApiFramework() !== null
+    if (isVpaid) {
+      return
+    }
+
+    var widgets = [{
+      destroy: function () {
+        this.view.parentElement.removeChild(this.view)
+        this.view.removeEventListener()
+        delete this.view
+      },
+      getView: function () {
+        var scale = 1
+        this.view = document.createElement('div')
+        Object.assign(this.view.style, {
+          height: '20px',
+          width: '20px',
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          margin: '15px 35px',
+          fontSize: `${16 * scale}px`,
+          lineHeight: `${12 * scale}pt`,
+          color: 'white'
+        })
+        this.view.innerText = '00:00'
+        return this.view
+      },
+      update ({ time, volume }) {
+        const progress = isNaN(time) ? 0 : Math.max(0, time)
+        let min = '' + Math.floor(progress / 60)
+        if (min.length === 1) {
+          min = '0' + min
+        }
+
+        let sec = '' + Math.floor(progress % 60)
+        if (sec.length === 1) {
+          sec = '0' + sec
+        }
+
+        this.view.innerText = `${min}:${sec}` 
+      }
+    }]
+
+    this._intowowWidgets = widgets
+    var overlay = this.$el[0]
+    for (const widget of this._intowowWidgets) {
+      overlay.appendChild(widget.getView())
+    }
+
+    this._widgetTimer = setInterval(() => {
+      var state = {
+        time: this._adsManager.getRemainingTime(),
+        volume: this._adsManager.getVolume()
+      }
+      for (const widget of widgets) {
+        widget.update(state)
+      }
+    }, 200)
+
+    var wrapper = document.createElement('div')
+    var img = document.createElement('img')
+    img.src = adIcon
+    Object.assign(img.style, {
+      width: '20px',
+      height: '20px',
+      position: 'absolute',
+      right: '0',
+      top: '0'
+    })
+    wrapper.appendChild(img)
+
+    overlay.appendChild(wrapper)
+  }
+
+  _destroyWidgets () {
+    if (!this._intowowWidgets) {
+      return
+    }
+
+    clearInterval(this._widgetTimer)
+
+    for (const widget of this._intowowWidgets) {
+      widget.destroy()
+    }
+    delete this._intowowWidgets
+  }
+
   _onAdsManagerLoaded(adsManagerLoadedEvent, eventListener) {
     let adsRenderingSettings = new google.ima.AdsRenderingSettings()
 
@@ -361,6 +451,7 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, () => {
+      this._destroyWidgets()
       this._imaEvent('content_resume_requested')
       this._playVideoContent()
     })
@@ -391,6 +482,9 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, (e) => {
+      this._adsManager.setVolume(0.5)
+      this._createWidgets()
+
       adDuration = adDuration || Math.floor(1000 * this._adsManager.getRemainingTime())
       if (! e.getAd().isLinear()) {
         // KNOWN ISSUE: non-linear ad is displayed *before* content for custom duration
@@ -458,6 +552,7 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, () => {
+      const duration = adDuration - this._adsManager.getRemainingTime() * 1000
       this._emitVideoEvent({
         event: 'skip',
         percentage: Math.ceil(duration / adDuration * 100),
@@ -475,6 +570,7 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     this._adsManager.addEventListener(google.ima.AdEvent.Type.VOLUME_CHANGED, () => {
       var newVolState = this._adsManager.getVolume() > 0 ? 'mute' : 'unmute'
       if (volumeState !== newVolState) {
+        const duration = adDuration - this._adsManager.getRemainingTime() * 1000
         this._emitVideoEvent({
           event: newVolState,
           percentage: Math.ceil(duration / adDuration * 100),

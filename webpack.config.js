@@ -31,7 +31,10 @@ module.exports = {
     libraryTarget: 'umd',
   },
   module: {
-    rules: [
+    rules: [{
+        test: /\.(png)?$/,
+        use: 'base64-inline-loader?limit=1000&name=[name].[ext]'
+      },
       {
         test: /\.js$/,
         loader: 'babel-loader',
