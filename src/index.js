@@ -335,12 +335,11 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
   }
 
-  _emitVideoEvent(event, duration, eventListener) {
-    const percentage = Math.ceil((duration - this._adsManager.getRemainingTime() * 1000) / duration * 100)
-
+  _emitVideoEvent({ event, percentage, adDuration, eventListener }) {
     eventListener.emit(event, {
-      duration,
-      percentage:  Math.min(100, Math.max(0, percentage))
+      duration: adDuration * percentage / 100,
+      adDuration,
+      percentage
     })
   }
 
@@ -355,7 +354,7 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
 
     this._adsManager = adsManagerLoadedEvent.getAdsManager(this._contentElement, adsRenderingSettings)
 
-    let duration = 0
+    let adDuration = 0
 
     this._adsManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, (e) => {
       this._onAdError(e)
@@ -375,18 +374,24 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.CLICK, () => {
-      this._emitVideoEvent('click', duration, eventListener)
+      const duration = adDuration - this._adsManager.getRemainingTime() * 1000
+      this._emitVideoEvent({
+        event: 'click',
+        percentage: Math.ceil(duration / adDuration * 100),
+        adDuration,
+        eventListener
+      })
       this._imaEvent('click')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.IMPRESSION, () => {
-      duration = duration || Math.floor(1000 * this._adsManager.getRemainingTime())
+      adDuration = adDuration || Math.floor(1000 * this._adsManager.getRemainingTime())
       eventListener.emit('impression')
       this._imaEvent('impression')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.STARTED, (e) => {
-      duration = duration || Math.floor(1000 * this._adsManager.getRemainingTime())
+      adDuration = adDuration || Math.floor(1000 * this._adsManager.getRemainingTime())
       if (! e.getAd().isLinear()) {
         // KNOWN ISSUE: non-linear ad is displayed *before* content for custom duration
         // FIXME: find a way to display it while playing content
@@ -395,27 +400,52 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
         this._maxDuration && this._startMaxDurationTimer()
       }
 
-      this._emitVideoEvent('video_view', duration, eventListener)
+      this._emitVideoEvent({
+        event: 'video_view',
+        percentage: 0,
+        adDuration,
+        eventListener
+      })
       this._imaEvent('started')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.FIRST_QUARTILE, () => {
-      this._emitVideoEvent('video_view', duration, eventListener)
+      this._emitVideoEvent({
+        event: 'video_view',
+        percentage: 25,
+        adDuration,
+        eventListener
+      })
       this._imaEvent('first_quartile')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.MIDPOINT, () => {
-      this._emitVideoEvent('video_view', duration, eventListener)
+      this._emitVideoEvent({
+        event: 'video_view',
+        percentage: 50,
+        adDuration,
+        eventListener
+      })
       this._imaEvent('midpoint')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.THIRD_QUARTILE, () => {
-      this._emitVideoEvent('video_view', duration, eventListener)
+      this._emitVideoEvent({
+        event: 'video_view',
+        percentage: 75,
+        adDuration,
+        eventListener
+      })
       this._imaEvent('third_quartile')
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.COMPLETE, () => {
-      this._emitVideoEvent('video_view', duration, eventListener)
+      this._emitVideoEvent({
+        event: 'video_view',
+        percentage: 100,
+        adDuration,
+        eventListener
+      })
       this._imaEvent('complete')
     })
 
@@ -428,7 +458,12 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     })
 
     this._adsManager.addEventListener(google.ima.AdEvent.Type.SKIPPED, () => {
-      this._emitVideoEvent('skip', duration, eventListener)
+      this._emitVideoEvent({
+        event: 'skip',
+        percentage: Math.ceil(duration / adDuration * 100),
+        adDuration,
+        eventListener
+      })
       this._imaEvent('skipped')
     })
 
@@ -440,7 +475,12 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     this._adsManager.addEventListener(google.ima.AdEvent.Type.VOLUME_CHANGED, () => {
       var newVolState = this._adsManager.getVolume() > 0 ? 'mute' : 'unmute'
       if (volumeState !== newVolState) {
-        this._emitVideoEvent(newVolState, duration, eventListener)
+        this._emitVideoEvent({
+          event: newVolState,
+          percentage: Math.ceil(duration / adDuration * 100),
+          adDuration,
+          eventListener
+        })
         volumeState = newVolState
       }
 
