@@ -323,13 +323,15 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
       })
     }
 
-    window.intowow.load({
-      placement: this._placement,
-      timeout: this._imaLoadtimeout,
-      source: this.core.options.source,
-      render: render
-    }).then(null, () => {
-      this._playVideoContent()
+    window.intowow.cmd.push(() => {
+      window.intowow.load({
+        placement: this._placement,
+        timeout: this._imaLoadtimeout,
+        source: this.core.options.source,
+        render: render
+      }).then(null, () => {
+        this._playVideoContent()
+      })
     })
   }
 
