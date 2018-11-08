@@ -279,6 +279,7 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
       // configure() method is called with a source.
       this._destroyAdsLoader();
       this._adsLoader = new google.ima.AdsLoader(this._adDisplayContainer);
+      this._adsLoader.getSettings().setDisableCustomPlaybackForIOS10Plus(true);
       this._adsLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (e) => {
         resolve(e);
       });
