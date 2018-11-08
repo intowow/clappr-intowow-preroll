@@ -351,6 +351,11 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
       return
     }
 
+    var isMobile = navigator.userAgent.indexOf('Mobi') !== -1
+    if (isMobile) {
+      return
+    }
+
     var widgets = [{
       destroy: function () {
         this.view.parentElement.removeChild(this.view)
@@ -432,6 +437,10 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
       widget.destroy()
     }
     delete this._intowowWidgets
+  }
+
+  _onAdError (err) {
+    console.error(err)
   }
 
   _onAdsManagerLoaded(adsManagerLoadedEvent, eventListener) {
