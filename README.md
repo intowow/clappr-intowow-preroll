@@ -1,39 +1,34 @@
-# Google IMA HTML5 preroll ad plugin for Clappr player
-
-[Google IMA HTML5 SDK (v3)](https://developers.google.com/interactive-media-ads/docs/sdks/html5/quickstart) __LINEAR PREROLL AD ONLY__ ad plugin for [Clappr](https://github.com/clappr/clappr) video player.
-
-This is a simple __proof of concept__ based on [Clappr ad skeleton plugin](https://github.com/kslimani/clappr-html5-preroll-skeleton-plugin) example.
+# Intowow preroll ad plugin for Clappr player
 
 This plugin is supported __ONLY__ by Clappr version `0.2.87` or greater. (_For older Clappr versions, use the `0.0.7` or `0.1.0` version of the plugin_).
 
 On mobile devices, it support only [Clappr playbacks](https://github.com/clappr/clappr/tree/master/src/playbacks) which use an HTML5 video element.
 
-See also [demo page](https://kslimani.github.io/clappr-google-ima-html5-preroll/) hosted on Github.
-
 # Usage
 
-Add both Clappr and the plugin scripts to your HTML:
+Add Clappr script to your HTML:
 
 ```html
 <head>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr-google-ima-html5-preroll-plugin@latest/dist/clappr-google-ima-html5-preroll-plugin.min.js"></script><!-- yes, that's a long name ;-) -->
 </head>
 ```
 
-Then just add `ClapprGoogleImaHtml5PrerollPlugin` into the list of plugins of your player instance, and the options for the plugin go in the `googleImaHtml5PrerollPlugin` property as shown below.
+Build plugin into your bundle.
+
+Then just add `ClapprIntowowPrerollPlugin` into the list of plugins of your player instance, and the options for the plugin go in the `googleImaHtml5PrerollPlugin` property as shown below.
 
 ```javascript
 var player = new Clappr.Player({
   source: "http://your.video/here.mp4",
   autoPlay: false, // Set to false and use plugin autostart option (or set to true if tag is false)
   plugins: {
-    core: [ClapprGoogleImaHtml5PrerollPlugin],
+    core: [ClapprIntowowPrerollPlugin],
   },
-  googleImaHtml5PrerollPlugin: {
+  intowowPrerollPlugin: {
     tag: 'VAST_TAG_URL', // VAST tag URL (or false to disable plugin)
-    vpaid: 1, // Default is 0 (0 is DISABLED, 1 is ENABLED and 2 is INSECURE)
-    // autostart: false, // Default is true
+    vpaid: 2, // Default is 0 (0 is DISABLED, 1 is ENABLED and 2 is INSECURE)
+    autostart: false, // Default is true
     // events: { /* Event map */ },
     // imaLoadTimeout: 3000, // Default is 6000 milliseconds
     // nonLinearDuration: 20000, // Default is 15000 milliseconds
@@ -52,7 +47,7 @@ For more details, see [Google IMA events types](https://developers.google.com/in
 
 ```javascript
   // [...]
-  googleImaHtml5PrerollPlugin: {
+  intowowPrerollPlugin: {
     events: {
       content_resume_requested: function() { console.log('content_resume_requested') },
       content_pause_requested: function() { console.log('content_pause_requested') },
