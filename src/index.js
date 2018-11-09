@@ -63,9 +63,9 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
 
   _configure() {
     this._placement = this.cfg.placement || false
-    this._autostart = this.cfg.autostart === false ? false : true // Default is true
+    this._autostart = false
     this._events = $.isPlainObject(this.cfg.events) ? this.cfg.events : {}
-    this._vpaid = this.cfg.hasOwnProperty('vpaid') ? this.cfg.vpaid : 0 // Default VpaidMode is DISABLED
+    this._vpaid = 2
     this._nonLinearDuration = this.cfg.nonLinearDuration > 0 ? this.cfg.nonLinearDuration : 15000 // Default is 15 seconds
     this._imaLoadtimeout = this.cfg.imaLoadTimeout > 0 ? this.cfg.imaLoadTimeout : 6000 // Default is 6 seconds
     this._usePosterIcon = !!this.cfg.usePosterIcon
