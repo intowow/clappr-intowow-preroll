@@ -71,11 +71,11 @@ For more details, see [Google IMA events types](https://developers.google.com/in
 Install dependencies :
 
 ```shell
-  yarn install
+  npm install
 ```
 
 Start HTTP dev server (http://0.0.0.0:8080) :
 
 ```shell
-  yarn run start
+  npm start
 ```
