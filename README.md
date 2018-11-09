@@ -1,6 +1,6 @@
 # Intowow preroll ad plugin for Clappr player
 
-This plugin is supported __ONLY__ by Clappr version `0.2.87` or greater. (_For older Clappr versions, use the `0.0.7` or `0.1.0` version of the plugin_).
+This plugin is supported __ONLY__ by Clappr version `0.2.87` or greater.
 
 On mobile devices, it support only [Clappr playbacks](https://github.com/clappr/clappr/tree/master/src/playbacks) which use an HTML5 video element.
 
@@ -16,7 +16,7 @@ Add Clappr script to your HTML:
 
 Build plugin into your bundle.
 
-Then just add `ClapprIntowowPrerollPlugin` into the list of plugins of your player instance, and the options for the plugin go in the `googleImaHtml5PrerollPlugin` property as shown below.
+Then just add `ClapprIntowowPrerollPlugin` into the list of plugins of your player instance, and the options for the plugin go in the `intowowPrerollPlugin` property as shown below.
 
 ```javascript
 var player = new Clappr.Player({
@@ -26,9 +26,7 @@ var player = new Clappr.Player({
     core: [ClapprIntowowPrerollPlugin],
   },
   intowowPrerollPlugin: {
-    tag: 'VAST_TAG_URL', // VAST tag URL (or false to disable plugin)
-    vpaid: 2, // Default is 0 (0 is DISABLED, 1 is ENABLED and 2 is INSECURE)
-    autostart: false, // Default is true
+    placement: 'INTOWOW_PLACEMENT_TAG',
     // events: { /* Event map */ },
     // imaLoadTimeout: 3000, // Default is 6000 milliseconds
     // nonLinearDuration: 20000, // Default is 15000 milliseconds
@@ -38,8 +36,6 @@ var player = new Clappr.Player({
   }
 });
 ```
-
-For more details about VPAID modes, see [Google IMA VPAID 2 support](https://developers.google.com/interactive-media-ads/docs/sdks/html5/vpaid2js#enabling).
 
 ## Events
 
