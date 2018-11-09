@@ -1,17 +1,18 @@
 {
-  "name": "clappr-google-ima-html5-preroll-plugin",
+  "name": "clappr-intowow-preroll-plugin",
   "version": "0.2.6",
-  "description": "Google IMA HTML5 preroll ad plugin for Clappr player.",
-  "main": "dist/clappr-google-ima-html5-preroll-plugin.js",
+  "description": "Intowow ad plugin for Clappr player.",
+  "main": "src/index.js",
   "scripts": {
     "build": "webpack --progress",
     "dist": "webpack --progress",
     "release": "npm run build && npm run dist",
-    "start": "webpack-dev-server"
+    "start": "webpack-dev-server",
+    "watch": "webpack -w"
   },
-  "author": "Karim Slimani <karim@playmedia.fr>",
+  "author": "Aaron",
   "license": "MIT",
-  "repository": "kslimani/clappr-google-ima-html5-preroll-plugin",
+  "repository": "intowow/clappr-intowow-preroll",
   "devDependencies": {
     "babel-core": "^6.24.1",
     "babel-loader": "^7.0.0",
