@@ -1,6 +1,6 @@
 # Intowow preroll ad plugin for Clappr player
 
-This plugin is supported __ONLY__ by Clappr version `0.2.87` or greater.
+This plugin is supported __ONLY__ by Clappr version `0.2.93`.
 
 On mobile devices, it support only [Clappr playbacks](https://github.com/clappr/clappr/tree/master/src/playbacks) which use an HTML5 video element.
 
@@ -10,7 +10,7 @@ Add Clappr script to your HTML:
 
 ```html
 <head>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clappr@0.2.93/dist/clappr.min.js"></script>
 </head>
 ```
 
