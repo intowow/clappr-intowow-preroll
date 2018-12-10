@@ -499,6 +499,7 @@ var ClapprIntowowPrerollPlugin = function (_UICorePlugin) {
     key: '_configure',
     value: function _configure() {
       this._placement = this.cfg.placement || false;
+      this._passbackAdTagUrl = this.cfg.passbackAdTagUrl;
       this._autostart = false;
       this._events = _clappr.$.isPlainObject(this.cfg.events) ? this.cfg.events : {};
       this._vpaid = 2;
@@ -785,11 +786,19 @@ var ClapprIntowowPrerollPlugin = function (_UICorePlugin) {
       };
 
       window.intowow.cmd.push(function () {
-        window.intowow.load({
-          placement: _this5._placement,
-          timeout: _this5._imaLoadtimeout,
-          source: _this5.core.options.source,
-          render: render
+        new Promise(function (resolve, reject) {
+          resolve(window.intowow.load({
+            placement: this._placement,
+            timeout: this._imaLoadtimeout,
+            source: this.core.options.source,
+            render: render
+          }));
+        }).catch(function (err) {
+          if (_this5._passbackAdTagUrl) {
+            return render({ adTagUrl: _this5._passbackAdTagUrl });
+          } else {
+            throw err;
+          }
         }).then(null, function () {
           _this5._playVideoContent();
         });

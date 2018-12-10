@@ -63,6 +63,7 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
 
   _configure() {
     this._placement = this.cfg.placement || false
+    this._passbackAdTagUrl = this.cfg.passbackAdTagUrl
     this._autostart = false
     this._events = $.isPlainObject(this.cfg.events) ? this.cfg.events : {}
     this._vpaid = 2
@@ -326,11 +327,20 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     }
 
     window.intowow.cmd.push(() => {
-      window.intowow.load({
-        placement: this._placement,
-        timeout: this._imaLoadtimeout,
-        source: this.core.options.source,
-        render: render
+      new Promise(function (resolve, reject) {
+        resolve(window.intowow.load({
+          placement: this._placement,
+          timeout: this._imaLoadtimeout,
+          source: this.core.options.source,
+          render: render
+        }))
+      })
+      .catch((err) => {
+        if (this._passbackAdTagUrl) {
+          return render({ adTagUrl: this._passbackAdTagUrl })
+        } else {
+          throw err
+        }
       }).then(null, () => {
         this._playVideoContent()
       })
