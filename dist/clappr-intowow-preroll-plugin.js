@@ -788,14 +788,19 @@ var ClapprIntowowPrerollPlugin = function (_UICorePlugin) {
       window.intowow.cmd.push(function () {
         new Promise(function (resolve, reject) {
           resolve(window.intowow.load({
-            placement: this._placement,
-            timeout: this._imaLoadtimeout,
-            source: this.core.options.source,
+            placement: _this5._placement,
+            timeout: _this5._imaLoadtimeout,
+            source: _this5.core.options.source,
             render: render
           }));
         }).catch(function (err) {
           if (_this5._passbackAdTagUrl) {
-            return render({ adTagUrl: _this5._passbackAdTagUrl });
+            return render({
+              adTagUrl: _this5._passbackAdTagUrl,
+              eventListener: {
+                emit: function emit() {}
+              }
+            });
           } else {
             throw err;
           }

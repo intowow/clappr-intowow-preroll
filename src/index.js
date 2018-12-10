@@ -327,7 +327,7 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
     }
 
     window.intowow.cmd.push(() => {
-      new Promise(function (resolve, reject) {
+      new Promise((resolve, reject) => {
         resolve(window.intowow.load({
           placement: this._placement,
           timeout: this._imaLoadtimeout,
@@ -337,7 +337,12 @@ export default class ClapprIntowowPrerollPlugin extends UICorePlugin {
       })
       .catch((err) => {
         if (this._passbackAdTagUrl) {
-          return render({ adTagUrl: this._passbackAdTagUrl })
+          return render({
+            adTagUrl: this._passbackAdTagUrl,
+            eventListener: {
+              emit: function () {}
+            }
+          })
         } else {
           throw err
         }
