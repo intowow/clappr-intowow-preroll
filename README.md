@@ -27,6 +27,7 @@ var player = new Clappr.Player({
   },
   intowowPrerollPlugin: {
     placement: 'INTOWOW_PLACEMENT_TAG',
+    passbackAdTagUrl: 'YOUR OPTIONAL BACK UP TAG',
     // events: { /* Event map */ },
     // imaLoadTimeout: 3000, // Default is 6000 milliseconds
     // nonLinearDuration: 20000, // Default is 15000 milliseconds
